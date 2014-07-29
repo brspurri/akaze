@@ -1,5 +1,7 @@
 ## README - A-KAZE Features
 
+This fork (forked by Brett Spurrier - @tterBreirrupS) is primarily identical to the upstream pablofdezalc/akaze master branch, however I have included a calculation of the laplacian. The laplacian sign is stored in the keypoint `class_id` property, but only after it has completed the use of the sublevel information. This seems safe to me but I welcome comments.
+
 Version: 1.2.0
 Date: 18-03-2014
 
