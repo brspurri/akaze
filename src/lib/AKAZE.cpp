@@ -446,6 +446,25 @@ void AKAZE::Do_Subpixel_Refinement(std::vector<cv::KeyPoint>& kpts) {
 
       // In OpenCV the size of a keypoint its the diameter
       kpts[i].size *= 2.0;
+      size_t idx = (int)kpts[i].pt.y * evolution_[kpts[i].class_id].Lxx.cols + (int)kpts[i].pt.x;
+      if (kpts[i].class_id == options_.nsublevels) {
+        kpts.erase(kpts.begin()+i);
+        i--;
+        continue;
+      }
+      else {
+        // Determine the laplacian
+        float *lxx_a = (float *)evolution_[kpts[i].class_id].Lxx.data;
+        float *lyy_a = (float *)evolution_[kpts[i].class_id].Lxx.data;
+        float lxx = lxx_a[idx];
+        float lyy = lyy_a[idx];
+            
+        // Add the laplacian sign for fast matching.
+        // Note this overwrites the sublevel class_id assigned previously,
+        //   used in determining the pt.x and pt.y scales. However, we don't need
+        //   sublevel information anymore.
+        kpts[i].class_id = ((lxx + lyy) >= 0 ? 1 : 0);
+      }
     }
     // Delete the point since its not stable
     else {
