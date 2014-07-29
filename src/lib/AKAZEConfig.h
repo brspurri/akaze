@@ -40,11 +40,11 @@ const float gauss25[7][7] = {
 /// AKAZE Descriptor Type
 enum DESCRIPTOR_TYPE {
   SURF_UPRIGHT = 0, ///< Upright descriptors, not invariant to rotation
-  SURF = 1,
+  SURF_O = 1,
   MSURF_UPRIGHT = 2, ///< Upright descriptors, not invariant to rotation
-  MSURF = 3,
+  MSURF_O = 3,
   MLDB_UPRIGHT = 4, ///< Upright descriptors, not invariant to rotation
-  MLDB = 5
+  MLDB_O = 5
 };
 
 /* ************************************************************************* */
@@ -86,13 +86,13 @@ struct AKAZEOptions {
   AKAZEOptions() {
     soffset = 1.6f;
     derivative_factor = 1.5f;
-    omax = 4;
+    omax = 8;
     nsublevels = 4;
     dthreshold = 0.001f;
     min_dthreshold = 0.00001f;
 
     diffusivity = PM_G2;
-    descriptor = MLDB;
+    descriptor = MSURF_UPRIGHT;
     descriptor_size = 0;
     descriptor_channels = 3;
     descriptor_pattern_size = 10;
@@ -133,10 +133,13 @@ struct AKAZEOptions {
   bool save_keypoints;            ///< Set to true for saving the detected keypoints and descriptors
   bool verbosity;                 ///< Set to true for displaying verbosity information
 
+  static int const AKAZE_FEATURECOUNT = 64;
+  static int const AKAZE_KEYPOINTCOUNT = 64;
   friend std::ostream& operator<<(std::ostream& os,
                                   const AKAZEOptions& akaze_options) {
 
     os << std::left;
+      
 #define CHECK_AKAZE_OPTION(option) \
   os << std::setw(33) << #option << " =  " << option << std::endl
 

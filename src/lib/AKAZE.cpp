@@ -268,11 +268,11 @@ void AKAZE::Find_Scale_Space_Extrema(std::vector<cv::KeyPoint>& kpts) {
   vector<cv::KeyPoint> kpts_aux;
 
   // Set maximum size
-  if (options_.descriptor == SURF_UPRIGHT || options_.descriptor == SURF ||
-      options_.descriptor == MLDB_UPRIGHT || options_.descriptor == MLDB) {
+  if (options_.descriptor == SURF_UPRIGHT || options_.descriptor == SURF_O ||
+      options_.descriptor == MLDB_UPRIGHT || options_.descriptor == MLDB_O) {
     smax = 10.0*sqrtf(2.0);
   }
-  else if (options_.descriptor == MSURF_UPRIGHT || options_.descriptor == MSURF) {
+  else if (options_.descriptor == MSURF_UPRIGHT || options_.descriptor == MSURF_O) {
     smax = 12.0*sqrtf(2.0);
   }
 
@@ -548,7 +548,7 @@ void AKAZE::Compute_Descriptors(std::vector<cv::KeyPoint>& kpts, cv::Mat& desc) 
       }
     }
     break;
-    case SURF :
+    case SURF_O :
     {
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -569,7 +569,7 @@ void AKAZE::Compute_Descriptors(std::vector<cv::KeyPoint>& kpts, cv::Mat& desc) 
       }
     }
     break;
-    case MSURF :
+    case MSURF_O:
     {
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -593,7 +593,7 @@ void AKAZE::Compute_Descriptors(std::vector<cv::KeyPoint>& kpts, cv::Mat& desc) 
       }
     }
     break;
-    case MLDB :
+    case MLDB_O :
     {
 #ifdef _OPENMP
 #pragma omp parallel for
