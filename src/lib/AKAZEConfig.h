@@ -84,6 +84,7 @@ struct AKAZETiming {
 struct AKAZEOptions {
 
   AKAZEOptions() {
+    omin = 0;
     soffset = 1.6f;
     derivative_factor = 1.5f;
     omax = 8;
@@ -92,13 +93,13 @@ struct AKAZEOptions {
     min_dthreshold = 0.00001f;
 
     diffusivity = PM_G2;
-    descriptor = MSURF_UPRIGHT;
+    descriptor = MSURF_O;
     descriptor_size = 0;
     descriptor_channels = 3;
     descriptor_pattern_size = 10;
     sderivatives = 1.0;
 
-    kcontrast = 0.001f;
+    kcontrast = 0.01f;
     kcontrast_percentile = 0.7f;
     kcontrast_nbins = 300;
 
@@ -134,7 +135,7 @@ struct AKAZEOptions {
   bool verbosity;                 ///< Set to true for displaying verbosity information
 
   static int const AKAZE_FEATURECOUNT = 64;
-  static int const AKAZE_KEYPOINTCOUNT = 64;
+  static int const AKAZE_KEYPOINTCOUNT = 50;
   friend std::ostream& operator<<(std::ostream& os,
                                   const AKAZEOptions& akaze_options) {
 

@@ -93,7 +93,7 @@ void convert_scale(cv::Mat &src) {
  * @param src Input image
  * @param dst Output image
  */
-void copy_and_convert_scale(const cv::Mat &src, cv::Mat dst) {
+void copy_and_convert_scale(const cv::Mat& src, cv::Mat& dst) {
 
   float min_val = 0, max_val = 0;
 
