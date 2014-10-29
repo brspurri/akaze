@@ -87,13 +87,13 @@ struct AKAZEOptions {
     omin = 0;
     soffset = 1.6f;
     derivative_factor = 1.5f;
-    omax = 8;
-    nsublevels = 4;
-    dthreshold = 0.001f;
+    omax = 4;
+    nsublevels = 2;
+    dthreshold = 0.0001f;
     min_dthreshold = 0.00001f;
 
     diffusivity = PM_G2;
-    descriptor = MSURF_O;
+    descriptor = MSURF_UPRIGHT;
     descriptor_size = 0;
     descriptor_channels = 3;
     descriptor_pattern_size = 10;
