@@ -2,12 +2,12 @@
 //
 // akaze_compare.cpp
 // Authors: Pablo F. Alcantarilla (1), Jesus Nuevo (2)
-// Institutions: Georgia Institute of Technology (1)
+// Institutions: Toshiba Research Europe Ltd (1)
 //               TrueVision Solutions (2)
-// Date: 15/09/2013
+// Date: 07/10/2014
 // Email: pablofdezalc@gmail.com
 //
-// AKAZE Features Copyright 2013, Pablo F. Alcantarilla, Jesus Nuevo
+// AKAZE Features Copyright 2014, Pablo F. Alcantarilla, Jesus Nuevo
 // All Rights Reserved
 // See LICENSE for the license information
 //=============================================================================
@@ -16,7 +16,7 @@
  * @file akaze_compare.cpp
  * @brief Main program for matching two images with A-KAZE features and compare
  * to BRISK and ORB
- * @date Sep 15, 2013
+ * @date Oct 07, 2014
  * @author Pablo F. Alcantarilla
  */
 
@@ -27,8 +27,8 @@ using namespace std;
 /* ************************************************************************* */
 // ORB settings
 const int ORB_MAX_KPTS = 1500;
-const float ORB_SCALE_FACTOR = 1.5;
-const int ORB_PYRAMID_LEVELS = 3;
+const float ORB_SCALE_FACTOR = 1.2;
+const int ORB_PYRAMID_LEVELS = 4;
 const float ORB_EDGE_THRESHOLD = 31.0;
 const int ORB_FIRST_PYRAMID_LEVEL = 0;
 const int ORB_WTA_K = 2;
@@ -36,10 +36,9 @@ const int ORB_PATCH_SIZE = 31;
 
 // BRISK settings
 const float BRISK_HTHRES = 10.0;
-const int BRISK_NOCTAVES = 3;
+const int BRISK_NOCTAVES = 4;
 
 // Some image matching options
-const bool COMPUTE_INLIERS_RANSAC = false;	// 0->Use ground truth homography, 1->Estimate homography with RANSAC
 const float MIN_H_ERROR = 2.50f;	      // Maximum error in pixels to accept an inlier
 const float DRATIO = 0.80f;		          // NNDR Matching value
 
@@ -140,9 +139,11 @@ int main(int argc, char *argv[]) {
   cv::Mat img_com_akaze = cv::Mat(cv::Size(img1.cols*2, img1.rows), CV_8UC3);
 
   // Read the homography file
-  read_homography(homography_path,HG);
+  bool use_ransac = false;
+  if (read_homography(homography_path,HG) == false)
+    use_ransac = true;
 
-/* ************************************************************************* */
+  /* ************************************************************************* */
 
   // ORB Features
   //*****************
@@ -165,12 +166,10 @@ int main(int argc, char *argv[]) {
 
   matches2points_nndr(kpts1_orb,kpts2_orb,dmatches_orb,matches_orb,DRATIO);
 
-  if (COMPUTE_INLIERS_RANSAC == false) {
+  if (use_ransac == false)
     compute_inliers_homography(matches_orb,inliers_orb,HG,MIN_H_ERROR);
-  }
-  else {
+  else
     compute_inliers_ransac(matches_orb,inliers_orb,MIN_H_ERROR,false);
-  }
 
   nmatches_orb = matches_orb.size()/2;
   ninliers_orb = inliers_orb.size()/2;
@@ -198,7 +197,7 @@ int main(int argc, char *argv[]) {
   cout << "ORB Features Extraction Time (ms): " << torb << endl;
   cout << endl;
 
-/* ************************************************************************* */
+  /* ************************************************************************* */
 
   // BRISK Features
   //*****************
@@ -211,12 +210,10 @@ int main(int argc, char *argv[]) {
 
   matches2points_nndr(kpts1_brisk, kpts2_brisk, dmatches_brisk, matches_brisk, DRATIO);
 
-  if (COMPUTE_INLIERS_RANSAC == false) {
+  if (use_ransac == false)
     compute_inliers_homography(matches_brisk, inliers_brisk, HG, MIN_H_ERROR);
-  }
-  else {
+  else
     compute_inliers_ransac(matches_brisk, inliers_brisk, MIN_H_ERROR, false);
-  }
 
   nkpts1_brisk = kpts1_brisk.size();
   nkpts2_brisk= kpts2_brisk.size();
@@ -246,17 +243,17 @@ int main(int argc, char *argv[]) {
   cout << "BRISK Features Extraction Time (ms): " << tbrisk << endl;
   cout << endl;
 
-/* ************************************************************************* */
+  /* ************************************************************************* */
 
   // A-KAZE Features
   //*******************
   options.img_width = img1.cols;
   options.img_height = img1.rows;
-  AKAZE evolution1(options);
+  libAKAZE::AKAZE evolution1(options);
 
   options.img_width = img2.cols;
   options.img_height = img2.rows;
-  AKAZE evolution2(options);
+  libAKAZE::AKAZE evolution2(options);
 
   t1 = cv::getTickCount();
 
@@ -281,12 +278,10 @@ int main(int argc, char *argv[]) {
 
   matches2points_nndr(kpts1_akaze,kpts2_akaze,dmatches_akaze,matches_akaze,DRATIO);
 
-  if (COMPUTE_INLIERS_RANSAC == false) {
+  if (use_ransac == false)
     compute_inliers_homography(matches_akaze,inliers_akaze,HG,MIN_H_ERROR);
-  }
-  else {
+  else
     compute_inliers_ransac(matches_akaze,inliers_akaze,MIN_H_ERROR,false);
-  }
 
   t2 = cv::getTickCount();
   takaze = 1000.0*(t2-t1)/cv::getTickFrequency();
@@ -341,9 +336,11 @@ int parse_input_options(AKAZEOptions& options, std::string& img_path1, std::stri
 
     img_path1 = argv[1];
     img_path2 = argv[2];
-    homography_path = argv[3];
 
-    for (int i = 1; i < argc; i++) {
+    if (argc >= 4)
+      homography_path = argv[3];
+
+    for (int i = 3; i < argc; i++) {
       if (!strcmp(argv[i],"--soffset")) {
         i = i+1;
         if (i >= argc) {

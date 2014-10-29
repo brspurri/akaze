@@ -1,7 +1,7 @@
 /**
  * @file AKAZEConfig.h
  * @brief AKAZE configuration file
- * @date Feb 23, 2014
+ * @date Oct 07, 2014
  * @author Pablo F. Alcantarilla, Jesus Nuevo
  */
 
@@ -10,14 +10,14 @@
 /* ************************************************************************* */
 // OpenCV
 #include <opencv2/opencv.hpp>
-#include <opencv2/features2d/features2d.hpp>
 
 // OpenMP
 #ifdef _OPENMP
-# include <omp.h>
+#include <omp.h>
+#define OMP_MAX_THREADS 16
 #endif
 
-// System Includes
+// System
 #include <string>
 #include <vector>
 #include <cmath>
@@ -178,17 +178,17 @@ struct TEvolution {
     sigma_size = 0;
   }
 
-  cv::Mat Lx, Ly;	// First order spatial derivatives
-  cv::Mat Lxx, Lxy, Lyy;	// Second order spatial derivatives
-  cv::Mat Lflow;	// Diffusivity image
-  cv::Mat Lt;	// Evolution image
-  cv::Mat Lsmooth; // Smoothed image
-  cv::Mat Lstep; // Evolution step update
-  cv::Mat Ldet; // Detector response
-  float etime;	// Evolution time
-  float esigma;	// Evolution sigma. For linear diffusion t = sigma^2 / 2
-  size_t octave;	// Image octave
-  size_t sublevel;	// Image sublevel in each octave
-  size_t sigma_size;	// Integer sigma. For computing the feature detector responses
+  cv::Mat Lx, Ly;                   ///< First order spatial derivatives
+  cv::Mat Lxx, Lxy, Lyy;            ///< Second order spatial derivatives
+  cv::Mat Lflow;                    ///< Diffusivity image
+  cv::Mat Lt;                       ///< Evolution image
+  cv::Mat Lsmooth;                  ///< Smoothed image
+  cv::Mat Lstep;                    ///< Evolution step update
+  cv::Mat Ldet;                     ///< Detector response
+  float etime;                      ///< Evolution time
+  float esigma;                     ///< Evolution sigma. For linear diffusion t = sigma^2 / 2
+  size_t octave;                    ///< Image octave
+  size_t sublevel;                  ///< Image sublevel in each octave
+  size_t sigma_size;                ///< Integer sigma. For computing the feature detector responses
 };
 
