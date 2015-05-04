@@ -1,14 +1,28 @@
 ## README - A-KAZE Features
-
 This fork (forked by Brett Spurrier - @tterBreirrupS) is primarily identical to the upstream pablofdezalc/akaze master branch, however I have included a calculation of the laplacian. The laplacian sign is stored in the keypoint `class_id` property, but only after it has completed the use of the sublevel information. This seems safe to me but I welcome comments.
 
-Version: 1.2.0
-Date: 18-03-2014
+=======
+Version: 1.4.0
+Date: 07-10-2014
 
 You can get the latest version of the code from github:
 `https://github.com/pablofdezalc/akaze`
 
 ## CHANGELOG
+=======
+Version: 1.4.0
+Changes:
+- Maximum number of OpenMP threads can be set with OMP_MAX_THREADS definition in AKAZEConfig.h. By default is set to 16. This avoid problems with some systems that have many cores. Thanks to Thomas Fraenz
+- Namespace libAKAZE created to avoid conflict with AKAZE class in OpenCV 3.0
+- Speed-up in detection in description thanks to the improvements done in the Google Summer of Code 2014 program. Most of this improvements are thanks to Fedor Mozorov, Vadim Pisarevsky and Gary Bradsky
+- akaze_match and akaze_compare now automatically perform the image matching estimating a planar homography using RANSAC if the homography txt file is not provided as input argument
+
+Version: 1.3.0
+Changes:
+- More efficient memory usage
+- Now the smoothing is performed after the FED process
+
+>>>>>>> upstream/master
 Version: 1.2.0
 Changes:
 - Header file config.h replaced by AKAZEConfig.h
