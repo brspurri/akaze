@@ -21,9 +21,7 @@
  */
 
 #include "AKAZE.h"
-
-// OpenCV
-#include <opencv/cxmisc.h>
+#include <opencv2/highgui/highgui.hpp>
 
 using namespace std;
 using namespace libAKAZE;
@@ -55,7 +53,7 @@ void AKAZE::Allocate_Memory_Evolution() {
 
   // Allocate the dimension of the matrices for the evolution
   for (int i = 0; i <= options_.omax-1; i++) {
-    rfactor = 1.0/pow(2.f, i);
+    rfactor = 1.0/pow(2.0f, i);
     level_height = (int)(options_.img_height*rfactor);
     level_width = (int)(options_.img_width*rfactor);
 
@@ -78,7 +76,7 @@ void AKAZE::Allocate_Memory_Evolution() {
       step.Lflow.create(size, CV_32F);
       step.Lstep.create(size, CV_32F);
 
-      step.esigma = options_.soffset*pow(2.f, (float)(j)/(float)(options_.nsublevels) + i);
+      step.esigma = options_.soffset*pow(2.0f, (float)(j)/(float)(options_.nsublevels) + i);
       step.sigma_size = fRound(step.esigma);
       step.etime = 0.5*(step.esigma*step.esigma);
       step.octave = i;
@@ -195,13 +193,13 @@ void AKAZE::Compute_Multiscale_Derivatives() {
   t1 = cv::getTickCount();
 
 #ifdef _OPENMP
-omp_set_num_threads(OMP_MAX_THREADS);
+  omp_set_num_threads(OMP_MAX_THREADS);
 #pragma omp parallel for
 #endif
 
-  for (int i = 0; i < (int)(evolution_.size()); i++) {
+  for (int i = 0; i < (int) evolution_.size(); i++) {
 
-    float ratio = pow(2.f,(float)evolution_[i].octave);
+    float ratio = pow(2.0f,(float)evolution_[i].octave);
     int sigma_size_ = fRound(evolution_[i].esigma*options_.derivative_factor/ratio);
 
     compute_scharr_derivatives(evolution_[i].Lsmooth, evolution_[i].Lx, 1, 0, sigma_size_);
@@ -228,9 +226,9 @@ void AKAZE::Compute_Determinant_Hessian_Response() {
   Compute_Multiscale_Derivatives();
 
   for (size_t i = 0; i < evolution_.size(); i++) {
-    if (options_.verbosity == true) {
+
+    if (options_.verbosity == true)
       cout << "Computing detector response. Determinant of Hessian. Evolution time: " << evolution_[i].etime << endl;
-    }
 
     for (int ix = 0; ix < evolution_[i].Ldet.rows; ix++) {
       const float* lxx = evolution_[i].Lxx.ptr<float>(ix);
@@ -238,7 +236,7 @@ void AKAZE::Compute_Determinant_Hessian_Response() {
       const float* lyy = evolution_[i].Lyy.ptr<float>(ix);
       float* ldet = evolution_[i].Ldet.ptr<float>(ix);
       for (int jx = 0; jx < evolution_[i].Ldet.cols; jx++)
-        ldet[jx] = lxx[jx]*lyy[jx]-lxy[jx]*lxy[jx];
+        ldet[jx] = (lxx[jx]*lyy[jx]-lxy[jx]*lxy[jx]);
     }
   }
 }
@@ -256,12 +254,21 @@ void AKAZE::Find_Scale_Space_Extrema(std::vector<cv::KeyPoint>& kpts) {
   vector<cv::KeyPoint> kpts_aux;
 
   // Set maximum size
+<<<<<<< HEAD
   if (options_.descriptor == SURF_UPRIGHT || options_.descriptor == SURF_O ||
       options_.descriptor == MLDB_UPRIGHT || options_.descriptor == MLDB_O) {
     smax = 10.0*sqrtf(2.0);
   }
   else if (options_.descriptor == MSURF_UPRIGHT || options_.descriptor == MSURF_O) {
     smax = 12.0*sqrtf(2.0);
+=======
+  if (options_.descriptor == SURF_UPRIGHT || options_.descriptor == SURF ||
+      options_.descriptor == MLDB_UPRIGHT || options_.descriptor == MLDB) {
+    smax = 10.0*sqrtf(2.0f);
+  }
+  else if (options_.descriptor == MSURF_UPRIGHT || options_.descriptor == MSURF) {
+    smax = 12.0*sqrtf(2.0f);
+>>>>>>> upstream/master
   }
 
   t1 = cv::getTickCount();
@@ -291,7 +298,7 @@ void AKAZE::Find_Scale_Space_Extrema(std::vector<cv::KeyPoint>& kpts) {
           point.size = evolution_[i].esigma*options_.derivative_factor;
           point.octave = evolution_[i].octave;
           point.class_id = i;
-          ratio = pow(2.f,point.octave);
+          ratio = pow(2.0f, point.octave);
           sigma_size_ = fRound(point.size/ratio);
           point.pt.x = jx;
           point.pt.y = ix;
@@ -301,8 +308,11 @@ void AKAZE::Find_Scale_Space_Extrema(std::vector<cv::KeyPoint>& kpts) {
 
             if ((point.class_id-1) == kpts_aux[ik].class_id ||
                 point.class_id == kpts_aux[ik].class_id) {
-              dist = sqrt(pow(point.pt.x*ratio-kpts_aux[ik].pt.x,2)+pow(point.pt.y*ratio-kpts_aux[ik].pt.y,2));
-              if (dist <= point.size) {
+
+              dist = (point.pt.x*ratio-kpts_aux[ik].pt.x)*(point.pt.x*ratio-kpts_aux[ik].pt.x) +
+                     (point.pt.y*ratio-kpts_aux[ik].pt.y)*(point.pt.y*ratio-kpts_aux[ik].pt.y);
+
+              if (dist <= point.size*point.size) {
                 if (point.response > kpts_aux[ik].response) {
                   id_repeated = ik;
                   is_repeated = true;
@@ -619,8 +629,7 @@ void AKAZE::Compute_Main_Orientation(cv::KeyPoint& kpt) const {
         sumX+=resX[k];
         sumY+=resY[k];
       }
-      else if (ang2 < ang1 &&
-               ((ang > 0 && ang < ang2) || (ang > ang1 && ang < 2.0*CV_PI) )) {
+      else if (ang2 < ang1 && ((ang > 0 && ang < ang2) || (ang > ang1 && ang < 2.0*CV_PI))) {
         sumX+=resX[k];
         sumY+=resY[k];
       }
@@ -1206,15 +1215,12 @@ void AKAZE::MLDB_Binary_Comparisons(float* values, unsigned char* desc,
                                     int count, int& dpos) const {
 
   int nr_channels = options_.descriptor_channels;
-  int* ivalues = (int*) values;
-  for(int i = 0; i < count * nr_channels; i++)
-    ivalues[i] = CV_TOGGLE_FLT(ivalues[i]);
 
   for(int pos = 0; pos < nr_channels; pos++) {
     for (int i = 0; i < count; i++) {
-      int ival = ivalues[nr_channels * i + pos];
+      float ival = values[nr_channels * i + pos];
       for (int j = i + 1; j < count; j++) {
-        int res = ival > ivalues[nr_channels * j + pos];
+        int res = ival > values[nr_channels * j + pos];
         desc[dpos >> 3] |= (res << (dpos & 7));
         dpos++;
       }
@@ -1391,7 +1397,7 @@ void AKAZE::Save_Scale_Space() {
     convert_scale(evolution_[i].Lt);
     evolution_[i].Lt.convertTo(img_aux,CV_8U,255.0,0);
     outputFile = "../output/evolution_" + to_formatted_string(i, 2) + ".jpg";
-    imwrite(outputFile,img_aux);
+    cv::imwrite(outputFile, img_aux);
   }
 }
 
@@ -1409,7 +1415,7 @@ void AKAZE::Save_Detector_Responses() {
       convert_scale(evolution_[i].Ldet);
       evolution_[i].Ldet.convertTo(img_aux,CV_8U,255.0,0);
       outputFile = "../output/images/detector_" + to_formatted_string(nimgs, 2) + ".jpg";
-      imwrite(outputFile,img_aux);
+      imwrite(outputFile.c_str(), img_aux);
       nimgs++;
     }
   }

@@ -20,6 +20,7 @@
  */
 
 #include "nldiffusion_functions.h"
+#include <opencv2/imgproc/imgproc.hpp>
 
 using namespace std;
 
@@ -208,6 +209,9 @@ void compute_scharr_derivatives(const cv::Mat& src, cv::Mat& dst, const size_t x
 /* ************************************************************************* */
 void nld_step_scalar(cv::Mat& Ld, const cv::Mat& c, cv::Mat& Lstep, const float stepsize) {
 
+  Lstep = cv::Scalar(0);
+
+  // Diffusion all the image except borders
 #ifdef _OPENMP
   omp_set_num_threads(OMP_MAX_THREADS);
 #pragma omp parallel for schedule(dynamic)
@@ -220,7 +224,6 @@ void nld_step_scalar(cv::Mat& Ld, const cv::Mat& c, cv::Mat& Lstep, const float 
     float* Ld_row = Ld.ptr<float>(y);
     float* Ld_row_p = Ld.ptr<float>(y+1);
     float* Ld_row_m = Ld.ptr<float>(y-1);
-
     float* Lstep_row = Lstep.ptr<float>(y);
 
     for (int x = 1; x < Lstep.cols-1; x++) {
@@ -232,6 +235,7 @@ void nld_step_scalar(cv::Mat& Ld, const cv::Mat& c, cv::Mat& Lstep, const float 
     }
   }
 
+  // First row
   const float* c_row = c.ptr<float>(0);
   const float* c_row_p = c.ptr<float>(1);
   float* Ld_row = Ld.ptr<float>(0);
@@ -240,11 +244,21 @@ void nld_step_scalar(cv::Mat& Ld, const cv::Mat& c, cv::Mat& Lstep, const float 
 
   for (int x = 1; x < Lstep.cols-1; x++) {
     float xpos = (c_row[x]+c_row[x+1])*(Ld_row[x+1]-Ld_row[x]);
-    float xneg = (c_row[x-1]*c_row[x])*(Ld_row[x]-Ld_row[x-1]);
+    float xneg = (c_row[x-1]+c_row[x])*(Ld_row[x]-Ld_row[x-1]);
     float ypos = (c_row[x]+c_row_p[x])*(Ld_row_p[x]-Ld_row[x]);
     Lstep_row[x] = 0.5*stepsize*(xpos-xneg + ypos);
   }
 
+  float xpos = (c_row[0]+c_row[1])*(Ld_row[1]-Ld_row[0]);
+  float ypos = (c_row[0]+c_row_p[0])*(Ld_row_p[0]-Ld_row[0]);
+  Lstep_row[0] = 0.5*stepsize*(xpos + ypos);
+
+  int x = Lstep.cols-1;
+  float xneg = (c_row[x-1]+c_row[x])*(Ld_row[x]-Ld_row[x-1]);
+  ypos = (c_row[x]+c_row_p[x])*(Ld_row_p[x]-Ld_row[x]);
+  Lstep_row[x] = 0.5*stepsize*(-xneg + ypos);
+
+  // Last row
   c_row = c.ptr<float>(Lstep.rows-1);
   c_row_p = c.ptr<float>(Lstep.rows-2);
   Ld_row = Ld.ptr<float>(Lstep.rows-1);
@@ -253,19 +267,29 @@ void nld_step_scalar(cv::Mat& Ld, const cv::Mat& c, cv::Mat& Lstep, const float 
 
   for (int x = 1; x < Lstep.cols-1; x++) {
     float xpos = (c_row[x]+c_row[x+1])*(Ld_row[x+1]-Ld_row[x]);
-    float xneg = (c_row[x-1]*c_row[x])*(Ld_row[x]-Ld_row[x-1]);
+    float xneg = (c_row[x-1]+c_row[x])*(Ld_row[x]-Ld_row[x-1]);
     float ypos = (c_row[x]+c_row_p[x])*(Ld_row_p[x]-Ld_row[x]);
     Lstep_row[x] = 0.5*stepsize*(xpos-xneg + ypos);
   }
 
+  xpos = (c_row[0]+c_row[1])*(Ld_row[1]-Ld_row[0]);
+  ypos = (c_row[0]+c_row_p[0])*(Ld_row_p[0]-Ld_row[0]);
+  Lstep_row[0] = 0.5*stepsize*(xpos + ypos);
+
+  x = Lstep.cols-1;
+  xneg = (c_row[x-1]+c_row[x])*(Ld_row[x]-Ld_row[x-1]);
+  ypos = (c_row[x]+c_row_p[x])*(Ld_row_p[x]-Ld_row[x]);
+  Lstep_row[x] = 0.5*stepsize*(-xneg + ypos);
+
+  // First and last columns
   for (int i = 1; i < Lstep.rows-1; i++) {
 
     const float* c_row = c.ptr<float>(i);
     const float* c_row_m = c.ptr<float>(i-1);
     const float* c_row_p = c.ptr<float>(i+1);
     float* Ld_row = Ld.ptr<float>(i);
-    float* Ld_row_p = Ld.ptr<float>(i-1);
-    float* Ld_row_m = Ld.ptr<float>(i+1);
+    float* Ld_row_p = Ld.ptr<float>(i+1);
+    float* Ld_row_m = Ld.ptr<float>(i-1);
     Lstep_row = Lstep.ptr<float>(i);
 
     float xpos = (c_row[0]+c_row[1])*(Ld_row[1]-Ld_row[0]);
@@ -293,8 +317,6 @@ void nld_step_scalar(cv::Mat& Ld, const cv::Mat& c, cv::Mat& Lstep, const float 
 void halfsample_image(const cv::Mat& src, cv::Mat& dst) {
 
   // Make sure the destination image is of the right size
-  CV_Assert(src.cols / 2 == dst.cols);
-  CV_Assert(src.rows / 2 == dst.rows);
   cv::resize(src, dst, dst.size(), 0, 0, cv::INTER_AREA);
 }
 

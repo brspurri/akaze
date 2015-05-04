@@ -19,7 +19,11 @@
  * @author Pablo F. Alcantarilla
  */
 
-#include "AKAZE.h"
+#include "./lib/AKAZE.h"
+
+// OpenCV
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 using namespace std;
 
@@ -61,18 +65,18 @@ int main(int argc, char *argv[]) {
   double takaze = 0.0, tmatch = 0.0;
 
   // Parse the input command line options
-  if (parse_input_options(options,img_path1,img_path2,homography_path,argc,argv)) {
+  if (parse_input_options(options,img_path1,img_path2,homography_path,argc,argv))
     return -1;
-  }
 
   // Read image 1 and if necessary convert to grayscale.
-  img1 = cv::imread(img_path1,0);
+  img1 = cv::imread(img_path1, 0);
   if (img1.data == NULL) {
     cerr << "Error loading image 1: " << img_path1 << endl;
     return -1;
   }
+
   // Read image 2 and if necessary convert to grayscale.
-  img2 = cv::imread(img_path2,0);
+  img2 = cv::imread(img_path2, 0);
   if (img2.data == NULL) {
     cerr << "Error loading image 2: " << img_path2 << endl;
     return -1;
@@ -90,7 +94,7 @@ int main(int argc, char *argv[]) {
   // Color images for results visualization
   img1_rgb = cv::Mat(cv::Size(img1.cols, img1.rows), CV_8UC3);
   img2_rgb = cv::Mat(cv::Size(img2.cols, img1.rows), CV_8UC3);
-  img_com = cv::Mat(cv::Size(img1.cols*2,img1.rows), CV_8UC3);
+  img_com = cv::Mat(cv::Size(img1.cols*2, img1.rows), CV_8UC3);
   img_r = cv::Mat(cv::Size(img_com.cols*rfactor, img_com.rows*rfactor), CV_8UC3);
 
   // Create the first AKAZE object
@@ -105,21 +109,16 @@ int main(int argc, char *argv[]) {
 
   t1 = cv::getTickCount();
 
-  // Create the nonlinear scale space
-  // and perform feature detection and description for image 1
   evolution1.Create_Nonlinear_Scale_Space(img1_32);
   evolution1.Feature_Detection(kpts1);
-  evolution1.Compute_Descriptors(kpts1,desc1);
+  evolution1.Compute_Descriptors(kpts1, desc1);
 
   evolution2.Create_Nonlinear_Scale_Space(img2_32);
   evolution2.Feature_Detection(kpts2);
-  evolution2.Compute_Descriptors(kpts2,desc2);
+  evolution2.Compute_Descriptors(kpts2, desc2);
 
   t2 = cv::getTickCount();
   takaze = 1000.0*(t2-t1)/cv::getTickFrequency();
-
-  nkpts1 = kpts1.size();
-  nkpts2 = kpts2.size();
 
   // Matching Descriptors!!
   vector<cv::Point2f> matches, inliers;
@@ -128,13 +127,10 @@ int main(int argc, char *argv[]) {
 
   t1 = cv::getTickCount();
 
-  if (options.descriptor < MLDB_UPRIGHT) {
+  if (options.descriptor < MLDB_UPRIGHT)
     matcher_l2->knnMatch(desc1, desc2, dmatches, 2);
-  }
-  // Binary descriptor, use Hamming distance
-  else {
+  else
     matcher_l1->knnMatch(desc1, desc2, dmatches, 2);
-  }
 
   t2 = cv::getTickCount();
   tmatch = 1000.0*(t2 - t1)/ cv::getTickFrequency();
@@ -148,14 +144,16 @@ int main(int argc, char *argv[]) {
     compute_inliers_ransac(matches, inliers, MIN_H_ERROR, false);
 
   // Compute the inliers statistics
+  nkpts1 = kpts1.size();
+  nkpts2 = kpts2.size();
   nmatches = matches.size()/2;
   ninliers = inliers.size()/2;
   noutliers = nmatches - ninliers;
   ratio = 100.0*((float) ninliers / (float) nmatches);
 
   // Prepare the visualization
-  cvtColor(img1, img1_rgb, CV_GRAY2BGR);
-  cvtColor(img2, img2_rgb, CV_GRAY2BGR);
+  cvtColor(img1, img1_rgb, cv::COLOR_GRAY2BGR);
+  cvtColor(img2, img2_rgb, cv::COLOR_GRAY2BGR);
 
   // Show matching statistics
   cout << "Number of Keypoints Image 1: " << nkpts1 << endl;
@@ -167,14 +165,12 @@ int main(int argc, char *argv[]) {
   cout << "Number of Outliers: " << noutliers << endl;
   cout << "Inliers Ratio: " << ratio << endl << endl;
 
-  draw_keypoints(img1_rgb,kpts1);
-  draw_keypoints(img2_rgb,kpts2);
-  draw_inliers(img1_rgb,img2_rgb,img_com,inliers);
-  cv::namedWindow("Inliers", CV_WINDOW_NORMAL);
+  draw_keypoints(img1_rgb, kpts1);
+  draw_keypoints(img2_rgb, kpts2);
+  draw_inliers(img1_rgb, img2_rgb, img_com, inliers);
+  cv::namedWindow("Inliers", cv::WINDOW_NORMAL);
   cv::imshow("Inliers",img_com);
   cv::waitKey(0);
-
-  imwrite("test.jpg", img_com);
 }
 
 /* ************************************************************************* */
